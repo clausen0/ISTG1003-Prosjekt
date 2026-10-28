@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def extract_lop_data(file_path, collums, papername=0):
@@ -51,3 +52,19 @@ if df is not None:
 
     print("Data extracted successfully:")
     print(df.head())  
+
+
+print("---Oppsumerging av data---")
+print(df.describe())
+
+sns.pairplot(df)
+plt.suptitle("Pairplot of LOP Data", y=1.02)
+plt.show()
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=df, x='Distanse', y='Kalorier')
+plt.title('Sammenheng mellom puls og kalorier')
+plt.xlabel('Gjennomsnittlig puls (bpm)')
+plt.ylabel('Kalorier (kcal)')
+plt.grid(True)
+plt.show()
