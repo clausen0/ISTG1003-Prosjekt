@@ -3,6 +3,8 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
 
 
 def extract_lop_data(file_path, collums, papername=0):
@@ -34,37 +36,52 @@ def extract_lop_data(file_path, collums, papername=0):
 data_collums = [
     "Distanse",
     "Bevegelsestid",
-    "Gjennomsnittlig fart",
     "Gjennomsnittlig puls",
+    "Stigning",
     "Kalorier"
 ]
 
 filepath = "ISTG1003-Prosjekt\\data\\rensede_lopeokter_3.csv"
 
-df = extract_lop_data(filepath, data_collums)
+df_cleaned = extract_lop_data(filepath, data_collums)
 
-if df is not None:
-    distanse = df["Distanse"]
-    tid = df["Bevegelsestid"]
-    fart = df["Gjennomsnittlig fart"]
-    puls = df["Gjennomsnittlig puls"]
-    kalorier = df["Kalorier"]
+df_cleaned = df_cleaned.rename(columns={
+    "Distanse": "Distanse",
+    "Bevegelsestid": "Tid",
+    "Gjennomsnittlig puls": "Puls",
+    "Stigning": "Stigning",
+    "Kalorier": "Kalorier"
+})
+
+if df_cleaned is not None:
+    distanse = df_cleaned["Distanse"]
+    tid = df_cleaned["Tid"]
+    puls = df_cleaned["Puls"]
+    stigning = df_cleaned["Stigning"]
+    kalorier = df_cleaned["Kalorier"]
 
     print("Data extracted successfully:")
-    print(df.head())  
+    print(df_cleaned.head())  
 
 
 print("---Oppsumerging av data---")
-print(df.describe())
+print(df_cleaned.describe())
 
-sns.pairplot(df)
+sns.pairplot(df_cleaned)
 plt.suptitle("Pairplot of LOP Data", y=1.02)
 plt.show()
 
 plt.figure(figsize=(10, 6))
-sns.scatterplot(data=df, x='Distanse', y='Kalorier')
+sns.scatterplot(data=df_cleaned, x='Distanse', y='Kalorier')
 plt.title('Sammenheng mellom puls og kalorier')
 plt.xlabel('Gjennomsnittlig puls (bpm)')
 plt.ylabel('Kalorier (kcal)')
 plt.grid(True)
 plt.show()
+
+Regresjon_formel = 'Kalorier ~ Distanse + Tid + Puls + Stigning'
+
+model = smf.ols(formula=Regresjon_formel, data=df_cleaned).fit()
+resultat = model.summary()
+
+print(resultat)
