@@ -85,3 +85,19 @@ model = smf.ols(formula=Regresjon_formel, data=df_cleaned).fit()
 resultat = model.summary()
 
 print(resultat)
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 6))
+
+ax[0].scatter(model.fittedvalues, model.resid, alpha=0.7)
+ax[0].axhline(0, color='red', linestyle='--')
+ax[0].set_title('Turkey anscombe plot')
+ax[0].set_xlabel('Predicted values')
+ax[0].set_ylabel('Residuals')
+ax[0].grid(True)
+
+sm.qqplot(model.resid, line='45', ax=ax[1])
+ax[1].set_title('QQ-plot of residuals')
+ax[1].grid(True)
+
+plt.tight_layout()
+plt.show()
