@@ -1,3 +1,9 @@
+# ISTG1003-Prosjekt/Kvalifikasjon av treningssett
+
+"""
+Påkrevde pakker for å gjøre klasifikasjon av datasettet.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -8,7 +14,11 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 import statsmodels.formula.api as smf
 
-# Fjernet den ubenyttede 'papername'-parameteren
+"""
+Funksjon for å hente inn data fra CSV-filen, med feilhånderting for 
+feil som kan oppstå under innlasting.
+"""
+
 def extract_lop_data(file_path, columns):
     try:
         lop_data = pd.read_csv(file_path, usecols=columns)
@@ -20,7 +30,10 @@ def extract_lop_data(file_path, columns):
         print(f"An error occurred while extracting LOP data: {e}")
         return None
 
-# Fjernet 'Kalorier' siden den ikke brukes i klassifiseringen
+"""
+Definerer kolonner som skal brukes i klassifiseringen.
+"""
+
 data_columns = [
     "Distanse",
     "Bevegelsestid",
@@ -28,12 +41,27 @@ data_columns = [
     "Stigning"
 ]
 
+"""
+Filstien for datasettet
+"""
+
 filepath = "ISTG1003-Prosjekt\\data\\rensede_lopeokter_4.csv"
+
+"""
+Funksjon for å hente inn data fra CSV-filen, og legger med de spesifike
+kolonnene som skal brukes.
+"""
 
 df = extract_lop_data(filepath, data_columns)
 
+"""
+Sjekker om df er none før videre behandling av dataen.
+"""
+
 if df is not None:
-    # Omdøper kolonner direkte her (fjernet den dupliserte koden)
+
+    # Gir kolonnene med kopplekse navn mer lesbare navn for videre bruk.
+
     df_cleaned = df.rename(
         columns={"Bevegelsestid": "Tid", "Gjennomsnittlig puls": "Puls"}
     )
@@ -44,7 +72,9 @@ if df is not None:
     # Opprett fasitkolonnen 'Intensitet'
     df_cleaned["Intensitet"] = (df_cleaned["Puls"] > 155).astype(int)
 
-    # --- DATASPLITTING (60% Trening, 20% Validering, 20% Test) ---
+    """
+    DATASPLITTING (60% Trening, 20% Validering, 20% Test)
+    """
     df_train_val, df_test = train_test_split(
         df_cleaned,
         test_size=0.20,
@@ -60,7 +90,6 @@ if df is not None:
 
     features = ["Distanse", "Tid", "Fart", "Stigning"]
 
-    # Standardisering for k-NN
     scaler = StandardScaler()
     X_train = scaler.fit_transform(df_train[features])
     X_val = scaler.transform(df_val[features])
@@ -70,7 +99,9 @@ if df is not None:
     y_val = df_val["Intensitet"]
     y_test = df_test["Intensitet"]
 
-    # --- METODE 1: k-NN ---
+    """
+    Klasifisering med k-NN 
+    """
     knaboer = range(1, 20, 2)
     val_feilrate = []
 
@@ -86,18 +117,22 @@ if df is not None:
     knn_best.fit(X_train, y_train)
     y_pred_knn = knn_best.predict(X_test)
 
-    # --- METODE 2: Logistisk Regresjon ---
+    """
+    Klasifisering med Logistisk Regresjon
+    """
     logit_mod = smf.logit(
         "Intensitet ~ Distanse + Tid + Fart + Stigning", data=df_train
     ).fit()
-    
+
     print("\n--- Logistisk Regresjon Resultater ---")
     print(logit_mod.summary())
 
     sannsynlighet_test = logit_mod.predict(df_test)
     y_pred_logit = (sannsynlighet_test >= 0.5).astype(int)
 
-    # --- EVALUERING ---
+    """
+    Evaluering av begge modellene på testsettet
+    """
     print("\n--- EVALUERING PÅ TESTDATA ---")
     print(f"k-NN Nøyaktighet (k={optimal_k}): {accuracy_score(y_test, y_pred_knn):.2%}")
     print(
@@ -106,6 +141,10 @@ if df is not None:
     )
 
     cm = confusion_matrix(y_test, y_pred_logit)
+
+    """
+    Plotting av resultatene fra klasifikasjonen
+    """
     plt.figure(figsize=(6, 5))
     sns.heatmap(
         cm,
