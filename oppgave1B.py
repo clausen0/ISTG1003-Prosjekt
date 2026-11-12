@@ -30,9 +30,8 @@ def extract_lop_data(file_path, columns):
         print(f"An error occurred while extracting LOP data: {e}")
         return None
 
-"""
-Definerer kolonner som skal brukes i klassifiseringen.
-"""
+
+# Definerer kolonner som skal brukes i klassifiseringen.
 
 data_columns = [
     "Distanse",
@@ -41,16 +40,15 @@ data_columns = [
     "Stigning"
 ]
 
-"""
-Filstien for datasettet
-"""
+
+# Filstien for datasettet
+
 
 filepath = "ISTG1003-Prosjekt\\data\\rensede_lopeokter_4.csv"
 
-"""
-Funksjon for å hente inn data fra CSV-filen, og legger med de spesifike
-kolonnene som skal brukes.
-"""
+
+# Funksjon for å hente inn data fra CSV-filen, og legger med de spesifike
+# kolonnene som skal brukes.
 
 df = extract_lop_data(filepath, data_columns)
 
