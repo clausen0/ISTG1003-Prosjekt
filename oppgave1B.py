@@ -61,14 +61,14 @@ if df is not None:
     # Gir kolonnene med kopplekse navn mer lesbare navn for videre bruk.
 
     df_cleaned = df.rename(
-        columns={"Bevegelsestid": "Tid", "Gjennomsnittlig puls": "Puls"}
+        columns={"Bevegelsestid": "Tid", "Gjennomsnittlig puls": "Puls", "Gjennomsnittlig fart": "Fart"}
     )
 
     # Beregn Fart i km/t
     df_cleaned["Fart"] = df_cleaned["Distanse"] / (df_cleaned["Tid"] / 3600)
 
     # Opprett fasitkolonnen 'Intensitet'
-    df_cleaned["Intensitet"] = (df_cleaned["Puls"] > 155).astype(int)
+    df_cleaned["Intensitet"] = (df_cleaned["Puls"] > 158).astype(int)
 
     """
     DATASPLITTING (60% Trening, 20% Validering, 20% Test)
