@@ -12,7 +12,7 @@ import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import r2_score
 
 """
 Funksjon for å hente inn data fra CSV-filen, med feilhånderting for 
@@ -21,13 +21,7 @@ feil som kan oppstå under innlasting.
 
 def extract_lop_data(file_path, collums):
     """
-    Extracts LOP data from a CSV file and returns it as a pandas DataFrame.
-
-    Parameters:
-    file_path (str): The path to the CSV file containing LOP data.
-
-    Returns:
-    pd.DataFrame: A DataFrame containing the extracted LOP data.
+    Henter inn løpedata fra en CSV-fil og returnerer en DataFrame
     """
     try:
         lop_data = pd.read_csv(file_path, usecols=collums)
@@ -40,6 +34,7 @@ def extract_lop_data(file_path, collums):
     except Exception as e:
         print(f"An error occurred while extracting LOP data: {e}")
         return None
+    
 # Definerer kolonner som skal brukes i klassifiseringen.
 
 data_collums = [
@@ -61,14 +56,6 @@ df = extract_lop_data(filepath, data_collums)
 
 # Gir kolonnene med kopplekse navn mer lesbare navn for videre bruk.
 
-df_cleaned = df.rename(columns={
-    "Distanse": "Distanse",
-    "Bevegelsestid": "Tid",
-    "Gjennomsnittlig puls": "Puls",
-    "Stigning": "Stigning",
-    "Kalorier": "Kalorier"
-})
-
 """
 Sjekker om df er none før videre behandling av dataen.
 """
@@ -79,6 +66,8 @@ if df is not None:
         "Gjennomsnittlig puls": "Puls"
     })
 
+    print("\n ---- Oppsummering av datasettet ----")
+    print(df_cleaned.describe())
    
     """
     DATASPLITTING (60% Trening, 20% Validering, 20% Test)
@@ -89,13 +78,10 @@ if df is not None:
     df_train, df_val = train_test_split(df_train_val, test_size=0.25, random_state=42)
 
     # Printer antall økter i hvert datasett for å bekrefte splittingen.
-    print(f"Antall økter: Trening={len(df_train)}, Validering={len(df_val)}, Test={len(df_test)}")
-
-
-    # Visualiserer treningsdataene med et pairplot for å se på sammenhenger mellom variablene.
-    sns.pairplot(df_train)
-    plt.suptitle("Pairplot av treningsdata", y=1.02)
-    plt.show()
+    print(
+        f"Antall økter: Trening={len(df_train)}, "
+        f"Validering={len(df_val)}, Test={len(df_test)}"
+        )
 
     #Tilpass en lineær regresjonsmodell ved hjelp av biblioteket statsmodels
     formel = 'Kalorier ~ Distanse + Tid + Stigning'
@@ -109,16 +95,14 @@ if df is not None:
     # Evaluer modellen på valideringssettet og testsettet
 
     val_pred = model.predict(df_val)
-    val_rmse = np.sqrt(mean_squared_error(df_val['Kalorier'], val_pred))
     val_r2 = r2_score(df_val['Kalorier'], val_pred)
-    print(f"\n[Validering] RMSE: {val_rmse:.2f} kcal | R^2: {val_r2:.3f}")
+    print(f"\n[Validering] R^2: {val_r2:.3f}")
 
    # Evaluer modellen på testsettet
 
     test_pred = model.predict(df_test)
-    test_rmse = np.sqrt(mean_squared_error(df_test['Kalorier'], test_pred))
     test_r2 = r2_score(df_test['Kalorier'], test_pred)
-    print(f"[Testsett]   RMSE: {test_rmse:.2f} kcal | R^2: {test_r2:.3f}")
+    print(f"[Testsett] R^2: {test_r2:.3f}")
 
 
     fig, ax = plt.subplots(1, 2, figsize=(14, 6))
@@ -128,15 +112,17 @@ if df is not None:
     """
 
     ax[0].scatter(model.fittedvalues, model.resid, alpha=0.7)
-    ax[0].axhline(0, color='red', linestyle='--')
-    ax[0].set_title('Tukey-Anscombe plott')
-    ax[0].set_xlabel('Predikerte verdier')
-    ax[0].set_ylabel('Residualer')
+    ax[0].axhline(0, color="red", linestyle="--")
+    ax[0].set_title("Tukey-Anscombe-plott")
+    ax[0].set_xlabel("Predikert verdi")
+    ax[0].set_ylabel("Residual")
     ax[0].grid(True)
 
-    sm.qqplot(model.resid, line='45', fit=True, ax=ax[1])
-    ax[1].set_title('QQ-plott av residualene')
+    sm.qqplot(model.resid, line="45", fit=True, ax=ax[1])
+    ax[1].set_title("Kvantil-kvantil-plott (QQ-plott) av residualene")
+    ax[1].set_xlabel("Kvantiler i normalfordelingen")
+    ax[1].set_ylabel("Kvantiler i residualene")
     ax[1].grid(True)
-    
+
     plt.tight_layout()
     plt.show()
