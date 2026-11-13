@@ -61,7 +61,11 @@ if df is not None:
     # Gir kolonnene med kopplekse navn mer lesbare navn for videre bruk.
 
     df_cleaned = df.rename(
-        columns={"Bevegelsestid": "Tid", "Gjennomsnittlig puls": "Puls", "Gjennomsnittlig fart": "Fart"}
+        columns={
+            "Bevegelsestid": "Tid", 
+             "Gjennomsnittlig puls": "Puls", 
+             "Gjennomsnittlig fart": "Fart"
+            }
     )
 
     # Beregn Fart i km/t
@@ -98,50 +102,66 @@ if df is not None:
     y_test = df_test["Intensitet"]
 
     """
-    Klasifisering med k-NN 
+    Klassifisering med k-NN 
     """
-    knaboer = range(1, 20, 2)
-    val_feilrate = []
+    knaboer = np.arange(1, 20, step=2)
+    val_feilrate = np.empty(len(knaboer))
 
-    for k in knaboer:
-        knn = KNeighborsClassifier(n_neighbors=k)
+    for i, k in enumerate(knaboer):
+        knn = KNeighborsClassifier(n_neighbors=k, p=2)
         knn.fit(X_train, y_train)
-        val_feilrate.append(1 - knn.score(X_val, y_val))
+        val_feilrate[i] = 1 - knn.score(X_val, y_val)
 
     optimal_k = knaboer[np.argmin(val_feilrate)]
     print(f"Optimal k valgt ut fra valideringssettet: k = {optimal_k}")
+    print(f"Laveste feilrate på valideringssettet (k-NN): {np.min(val_feilrate):.4f}")
 
-    knn_best = KNeighborsClassifier(n_neighbors=optimal_k)
+    knn_best = KNeighborsClassifier(n_neighbors=optimal_k, p=2)
     knn_best.fit(X_train, y_train)
     y_pred_knn = knn_best.predict(X_test)
 
     """
     Klasifisering med Logistisk Regresjon
     """
-    logit_mod = smf.logit(
-        "Intensitet ~ Distanse + Tid + Fart + Stigning", data=df_train
-    ).fit()
+    formel = "Intensitet ~ Distanse + Tid + Fart + Stigning"
+    logit_mod = smf.logit(formel, data=df_train).fit()
 
     print("\n--- Logistisk Regresjon Resultater ---")
     print(logit_mod.summary())
 
-    sannsynlighet_test = logit_mod.predict(df_test)
-    y_pred_logit = (sannsynlighet_test >= 0.5).astype(int)
+    # Skriver ut odds-faktorer (exp(beta)) som gjennomgått i forelesning
+    print("\n--- Odds-faktorer (exp(beta)) ---")
+    print(np.exp(logit_mod.params))
+
+    cutoff = 0.5
+    val_pred_prob = logit_mod.predict(exog=df_val)
+    y_val_pred_logit = np.where(val_pred_prob > cutoff, 1, 0)
+    val_feilrate_logit = 1 - accuracy_score(y_true=y_val, y_pred=y_val_pred_logit)
+    print(f"\nFeilrate på valideringssettet (Logistisk regresjon): {val_feilrate_logit:.4f}")
+
+    test_pred_prob = logit_mod.predict(exog=df_test)
+    y_pred_logit = np.where(test_pred_prob > cutoff, 1, 0)
 
     """
     Evaluering av begge modellene på testsettet
     """
+    feilrate_knn = 1 - accuracy_score(y_true=y_test, y_pred=y_pred_knn)
+    feilrate_logit = 1 - accuracy_score(y_true=y_test, y_pred=y_pred_logit)
+
     print("\n--- EVALUERING PÅ TESTDATA ---")
-    print(f"k-NN Nøyaktighet (k={optimal_k}): {accuracy_score(y_test, y_pred_knn):.2%}")
     print(
-        "Logistisk Regresjon Nøyaktighet:"
-        f" {accuracy_score(y_test, y_pred_logit):.2%}"
+        f"k-NN (k={optimal_k}) -> Feilrate: {feilrate_knn:.4f} | "
+        f"Nøyaktighet: {accuracy_score(y_test, y_pred_knn):.2%}"
+    )
+    print(
+        f"Logistisk Regresjon -> Feilrate: {feilrate_logit:.4f} | "
+        f"Nøyaktighet: {accuracy_score(y_test, y_pred_logit):.2%}"
     )
 
     cm = confusion_matrix(y_test, y_pred_logit)
 
     """
-    Plotting av resultatene fra klasifikasjonen
+    Plotting av forvirringsmatrise fra klassifikasjonen
     """
     plt.figure(figsize=(6, 5))
     sns.heatmap(
@@ -154,6 +174,6 @@ if df is not None:
     )
 
     plt.xlabel("Predikert klasse")
-    plt.ylabel("Reell klasse")
+    plt.ylabel("Sann klasse")
     plt.title("Forvirringsmatrise (Testsett - Logistisk Regresjon)")
     plt.show()
