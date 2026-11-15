@@ -72,7 +72,7 @@ if df is not None:
     df_cleaned["Fart"] = df_cleaned["Distanse"] / (df_cleaned["Tid"] / 3600)
 
     # Opprett fasitkolonnen 'Intensitet'
-    df_cleaned["Intensitet"] = (df_cleaned["Puls"] > 158).astype(int)
+    df_cleaned["Intensitet"] = (df_cleaned["Puls"] > 158.5).astype(int)
 
     """
     DATASPLITTING (60% Trening, 20% Validering, 20% Test)
