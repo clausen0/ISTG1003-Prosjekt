@@ -160,6 +160,8 @@ if df is not None:
 
     cm = confusion_matrix(y_test, y_pred_logit)
 
+    cm_knn = confusion_matrix(y_test, y_pred_knn)
+
     """
     Plotting av forvirringsmatrise fra klassifikasjonen
     """
@@ -176,4 +178,22 @@ if df is not None:
     plt.xlabel("Predikert klasse")
     plt.ylabel("Sann klasse")
     plt.title("Forvirringsmatrise (Testsett - Logistisk Regresjon)")
+    plt.show()
+
+    """
+    Plotting av forvirringsmatrise fra k-NN klassifikasjonen
+    
+    """
+    sns.heatmap(
+        cm_knn,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=["Rolig/Moderat (0)", "Hard (1)"],
+        yticklabels=["Rolig/Moderat (0)", "Hard (1)"],
+    )
+
+    plt.xlabel("Predikert klasse")
+    plt.ylabel("Sann klasse")
+    plt.title("Forvirringsmatrise (Testsett - k-NN)")
     plt.show()
