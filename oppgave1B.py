@@ -184,6 +184,7 @@ if df is not None:
     Plotting av forvirringsmatrise fra k-NN klassifikasjonen
     
     """
+    plt.figure(figsize=(6, 5))
     sns.heatmap(
         cm_knn,
         annot=True,
